@@ -1,116 +1,78 @@
-import React from "react";
-import { useState, useEffect } from "react";
+// src/CafesTable.jsx  
+import React, { useEffect, useState, useMemo } from 'react';  
+import FilterCafes from './FilterCafes';  
 
-const CafesTable = () => {
-  const [cafes, setCafes] = useState();
+const subwayOptions = [  
+  { name: "Московская", code: "Moscow" },  
+  { name: "Арбат", code: "Arbat" },  
+  { name: "Александровский сад", code: "Alexandrovsky Garden" }, // Исправлено здесь
+  { name: "Парк Культуры", code: "Culture" },  
+  { name: "Театральная", code: "Theater" },  
+];
 
-  // , {
-  //   headers:{
-  //     accept: 'application/json',
-  //     'User-agent': 'learning app',
-  //   }}
+const CafesTable = () => {  
+    const [cafes, setCafes] = useState([]);  
+    const [loading, setLoading] = useState(true);  
+    const [error, setError] = useState(null);  
+    const [selectedSubway, setSelectedSubway] = useState('All');  
 
-  // const jsonFileReader = async path => {
-  //   return new Promise((resolve, reject) => {
+    useEffect(() => {  
+        const fetchCafes = async () => {  
+            try {  
+                const response = await fetch('/cafes');  
+                if (!response.ok) {  
+                    throw new Error('Network response was not ok');  
+                }  
+                const data = await response.json();  
+                console.log('Fetched cafes:', data); // Для отладки  
+                if (Array.isArray(data.cafes)) {  
+                    setCafes(data.cafes);  
+                } else {  
+                    console.error('Expected cafes to be an array but got:', data.cafes);  
+                    setCafes([]);  
+                }  
+            } catch (error) {  
+                setError(error.message);  
+            } finally {  
+                setLoading(false);  
+            }  
+        };  
 
-  //       const request = new XMLHttpRequest();
-  //       request.open('GET', path, true);
-  //       request.responseType = 'blob';
+        fetchCafes();  
+    }, []);  
 
-  //       request.onload = () => {
-  //         const reader = new FileReader();
+    // Фильтрация кафе по выбранной станции метро 
+    const filteredCafes = useMemo(() => {
+        return selectedSubway === 'All'   
+            ? cafes   
+            : cafes.filter(cafe => cafe.subwayCode === selectedSubway);
+    }, [cafes, selectedSubway]);
 
-  //         reader.onload = e => resolve(e.target.result);
-  //         reader.onerror = err => reject(err);
-  //         reader.readAsDataURL(request.response);
-  //       };
+    if (loading) {  
+        return <div>Загрузка...</div>;  // Можно заменить на индикатор загрузки
+    }  
 
-  //       request.send();
-  //   });
-  // }
+    if (error) {  
+        return <div>Ошибка: {error}</div>;  // Можно добавить больше информации о ошибке
+    }  
 
-  // const returnJsonData = async (url) => {
-  //   const jsonData = await jsonFileReader(url);
-  //   console.log('Here is your JSON data: => ', jsonData);
-  //   return jsonData;
-  // };
-
-  useEffect(() => {
-    // console.log(returnJsonData('./file.json'));
-    // fetch("__fixtures__/cafes.js", {
-    //   method: "GET",
-    //   headers: {
-    //     // update with your user-agent
-    //     "User-Agent":
-    //       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36", 
-    //     Accept: "application/json; charset=UTF-8",
-    //   }})
-    // fetch("http://localhost:8070/__fixtures__/cafes.js")
-    // fetch("/cafes.js")
-    fetch("cafes.js")
-      .then((response) => {
-        if (response.ok) {
-          console.log('************************************************************');
-          console.log('ok');
-          // console.log(response);
-          console.log(response.json());
-          
-          // const receivedResponse = response.text();
-          // const receivedResponse = JSON.parse(response)
-          // console.log(receivedResponse);
-          // receivedResponse.lastIndexOf('}');
-          // console.log(receivedResponse.lastIndexOf('}'));
-
-          // return response;
-          // return JSON.parse(JSON.stringify(response));
-          // return JSON.parse(response);
-          // return JSON.stringify(response);
-          return response.json();
-          // return response.text();
-          // return JSON.parse(response);
-          
-        }
-        // throw new Error('Something went wrong');
-        // return Promise.reject(response);
-      })
-      // .then((response) => response.json())
-      // .then((receivedCafes) => console.log(receivedCafes))
-      // .then((receivedCafes) => console.log(receivedCafes.cafes))
-      // .then((data) => setCafes(data.cafes))
-      // .catch((error) => {
-      //   console.log(error);
-      //   console.log(11);
-      // })
-  }, []);
-
-  return (
-    <>
-    </>
-  );
-    // <div id="container" className="container m-3">
-    //   <div className="cafesTable">
-    //     <div className="controls">
-    //       <select defaultValue={'All'} name="subway" id="subway">
-    //         <option value="All">Все</option>
-    //         <option value="Московская">Московская</option>
-    //         <option value="Арбат">Арбат</option>
-    //         <option value="Парк Культуры">Парк Культуры</option>
-    //         <option value="Красная Площадь">Красная Площадь</option>
-    //         <option value="Театральная">Театральная</option>
-    //       </select>
-    //     </div>
-    //     <ul className="cardsList">
-    //       <li className="card">
-    //         {/* <img src="https://via.placeholder.com/150" alt="" /> */}
-    //         <h2>Name</h2>
-    //         <p>decs</p>
-    //         <p>Address</p>
-    //         <p>Subway: Arbat</p>
-    //         <p>8:00 - 20:00</p>
-    //       </li>
-    //     </ul>
-    //   </div>
-    // </div>
-};
+    return (  
+        <div className='cafesTable'>  
+            <FilterCafes subwayOptions={subwayOptions} onSelect={setSelectedSubway} />  
+            <ul className="cardsList">  
+                {filteredCafes.map(cafe => (  
+                    <li className="card" key={cafe.id}>  
+                        <img src={cafe.img || 'https://via.placeholder.com/150'} alt={cafe.name} />  
+                        <h2>{cafe.name}</h2>  
+                        <p>{cafe.desc}</p> {/* Используем cafe.desc вместо cafe.description */}  
+                        <p>{cafe.address}</p>  
+                        <p>Станция метро: {cafe.subwayCode}</p> {/* Используем subwayCode вместо subway */}  
+                        <p>{cafe.workTime}</p> {/* Используем workTime вместо hours */}  
+                    </li>  
+                ))}
+                            </ul>  
+        </div>  
+    );  
+};  
 
 export default CafesTable;
